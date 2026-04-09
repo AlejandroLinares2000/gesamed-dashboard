@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GESAMED 2000 — Dashboard Financiero</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg0:#0b0f1a;--bg1:#111827;--card:rgba(17,24,39,.72);--card2:rgba(23,33,54,.62);--stroke:rgba(100,116,160,.18);--text:#eaf0ff;--muted:rgba(165,180,210,.54);--shadow:0 2px 24px rgba(0,0,0,.38);--shadow2:0 1px 8px rgba(0,0,0,.22);--radius:16px;--radius2:10px;--focus:0 0 0 2px rgba(96,165,250,.5)}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+        body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg0);color:var(--text);min-height:100vh;background:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(56,90,160,.22) 0%,transparent 60%),linear-gradient(175deg,var(--bg0) 0%,#0d1225 40%,#10162a 100%)}
+        header{position:sticky;top:0;z-index:100;backdrop-filter:blur(18px) saturate(1.4);background:rgba(11,15,26,.78);border-bottom:1px solid var(--stroke);padding:1.1rem 2rem;text-align:center}
+        header h1{font-size:1.55rem;font-weight:800;letter-spacing:-.02em;color:#f0f4ff}
+        header h1::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#60a5fa;margin-right:10px;vertical-align:middle;box-shadow:0 0 8px rgba(96,165,250,.6)}
+        header .subtitle{font-size:.82rem;font-weight:600;color:rgba(96,165,250,.85);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+        header p{font-size:.78rem;color:var(--muted);margin-top:3px}
+        .container{max-width:1400px;margin:0 auto;padding:1.2rem 1.6rem 2rem}
+        .filters{backdrop-filter:blur(14px);background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:1.4rem;box-shadow:var(--shadow2)}
+        .filter-group{display:grid;grid-template-columns:repeat(12,1fr);gap:.7rem;align-items:end}
+        .filter-group label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px;display:block}
+        .filter-group select,.filter-group input{background:var(--bg1);border:1px solid var(--stroke);color:var(--text);font-size:.82rem;padding:.45rem .6rem;border-radius:var(--radius2);width:100%;outline:none}
+        .btn-reset{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;padding:.45rem 1.1rem;border-radius:var(--radius2);font-size:.78rem;font-weight:600;cursor:pointer}
+        .kpi-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:.9rem;margin-bottom:1.4rem}
+        .kpi-card{grid-column:span 3;position:relative;backdrop-filter:blur(12px);background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);padding:1.1rem 1.2rem;box-shadow:var(--shadow2)}
+        .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+        .kpi-card.blue::before{background:#3b82f6}.kpi-card.green::before{background:#22c55e}.kpi-card.orange::before{background:#f59e0b}.kpi-card.purple::before{background:#a855f7}.kpi-card.red::before{background:#ef4444}.kpi-card.teal::before{background:#14b8a6}.kpi-card.pink::before{background:#ec4899}
+        .kpi-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase}
+        .kpi-value{font-size:1.55rem;font-weight:800;margin:4px 0 2px}
+        .kpi-change{font-size:.72rem;font-weight:600}
+        .charts-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:1rem;margin-bottom:1.4rem}
+        .chart-container{grid-column:span 6;background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);padding:1rem 1.1rem}
+        .chart-container.full-width{grid-column:span 12}
+        .chart-wrapper{position:relative;height:280px}.chart-wrapper.tall{height:360px}
+        .data-table{background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);padding:1rem;overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:.78rem}
+        th{background:rgba(30,41,66,.92);color:var(--muted);padding:.6rem .7rem;text-align:left;border-bottom:1px solid var(--stroke)}
+        td{padding:.55rem .7rem;border-bottom:1px solid rgba(100,116,160,.1)}
+        .text-right{text-align:right}
+        .estado-badge{padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:600;text-transform:uppercase}
+        .estado-pagado{background:rgba(34,197,94,.18);color:#4ade80}
+        .estado-monitorio{background:rgba(249,115,22,.18);color:#fb923c}
+        .estado-sin-respuesta{background:rgba(239,68,68,.18);color:#f87171}
+        .estado-pte-pago{background:rgba(168,85,247,.18);color:#c084fc}
+        .pagination{display:flex;justify-content:center;align-items:center;gap:.8rem;margin-top:.8rem}
+        .pagination button{background:var(--card2);border:1px solid var(--stroke);color:var(--text);padding:.4rem 1rem;border-radius:var(--radius2);cursor:pointer}
+        .pagination button:disabled{opacity:.4}
+        @media(max-width:1200px){.kpi-card{grid-column:span 4}}
+        @media(max-width:900px){.kpi-card{grid-column:span 6}.chart-container{grid-column:span 12 !important}}
+        @media(max-width:680px){.kpi-card{grid-column:span 12}.filter-group{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>GESAMED 2000 — Dashboard Financiero</h1>
+    <div class="subtitle">Panel de Control de Expedientes</div>
+    <p id="statusMessage">Cargando datos desde Google Sheets...</p>
+</header>
+
+<div class="container">
+    <div class="filters">
+        <div class="filter-group">
+            <div style="grid-column:span 3"><label>Aseguradora</label><select id="filterAseg"><option value="">Todas</option></select></div>
+            <div style="grid-column:span 2"><label>Abogado</label><select id="filterAbog"><option value="">Todos</option></select></div>
+            <div style="grid-column:span 2"><label>Estado</label><select id="filterEstado"><option value="">Todos</option></select></div>
+            <div style="grid-column:span 2"><label>Fecha desde</label><input type="date" id="filterDesde"></div>
+            <div style="grid-column:span 2"><label>Fecha hasta</label><input type="date" id="filterHasta"></div>
+            <div style="grid-column:span 1"><button class="btn-reset" onclick="resetFilters()">Limpiar</button></div>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card blue"><div class="kpi-label">Total Expedientes</div><div class="kpi-value" id="kpiExpedientes">0</div><div class="kpi-change" id="kpiExpChange">0% del total</div></div>
+        <div class="kpi-card green"><div class="kpi-label">Total Facturado</div><div class="kpi-value" id="kpiFacturado">0 €</div><div class="kpi-change" id="kpiFactChange"></div></div>
+        <div class="kpi-card orange"><div class="kpi-label">Total Negociado</div><div class="kpi-value" id="kpiNegociado">0 €</div><div class="kpi-change" id="kpiNegChange"></div></div>
+        <div class="kpi-card purple"><div class="kpi-label">Total Cobrado</div><div class="kpi-value" id="kpiCobrado">0 €</div><div class="kpi-change" id="kpiCobChange"></div></div>
+        <div class="kpi-card teal"><div class="kpi-label">Tasa de Cobro</div><div class="kpi-value" id="kpiTasa">0%</div><div class="kpi-change">cobrado / facturado</div></div>
+        <div class="kpi-card red"><div class="kpi-label">Pendiente Cobro</div><div class="kpi-value" id="kpiPendiente">0 €</div><div class="kpi-change" id="kpiPendChange"></div></div>
+        <div class="kpi-card pink"><div class="kpi-label">Media por Expediente</div><div class="kpi-value" id="kpiMedia">0 €</div><div class="kpi-change">facturado medio</div></div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-container"><h3>Distribución por Estado</h3><div class="chart-wrapper"><canvas id="chartEstado"></canvas></div></div>
+        <div class="chart-container"><h3>Top 10 Aseguradoras (Facturado)</h3><div class="chart-wrapper"><canvas id="chartAseg"></canvas></div></div>
+        <div class="chart-container"><h3>Evolución Mensual Facturado</h3><div class="chart-wrapper"><canvas id="chartMensual"></canvas></div></div>
+        <div class="chart-container"><h3>Facturado vs Cobrado por Año</h3><div class="chart-wrapper"><canvas id="chartAnual"></canvas></div></div>
+        <div class="chart-container"><h3>Expedientes por Abogado</h3><div class="chart-wrapper"><canvas id="chartAbog"></canvas></div></div>
+        <div class="chart-container"><h3>Facturado por Estado</h3><div class="chart-wrapper"><canvas id="chartEstadoFact"></canvas></div></div>
+        <div class="chart-container full-width"><h3>Facturado vs Negociado vs Cobrado (Mensual)</h3><div class="chart-wrapper tall"><canvas id="chartComparativo"></canvas></div></div>
+    </div>
+
+    <div class="data-table">
+        <h3>Detalle de Expedientes <span id="tableCount" style="color:var(--muted);font-size:.76rem"></span></h3>
+        <table>
+            <thead><tr><th>Nº Expediente</th><th>Fecha</th><th>Aseguradora</th><th>Abogado</th><th class="text-right">Facturado</th><th class="text-right">Negociado</th><th class="text-right">Cobrado</th><th>Estado</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="pagination">
+            <button id="btnPrev" onclick="changePage(-1)">◀ Anterior</button>
+            <span id="pageInfo">Página 1 de 1</span>
+            <button id="btnNext" onclick="changePage(1)">Siguiente ▶</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// URL generada en Google Sheets (Publicar en la web -> CSV)
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRD4xAY-smgan-fPLVb11yhV4QsQiKuJ8bnVyUrnJuNXuw6Sis3THNWL5Jg26M6qZM03GzIkkJcwKYA/pub?gid=2126248190&single=true&output=csv';
+
+let DATA = [];
+let filteredData = [];
+let currentPage = 1;
+const PAGE_SIZE = 20;
+let charts = {};
+
+// Función robusta para cargar CSV
+async function loadData() {
+    try {
+        const res = await fetch(SHEET_URL);
+        if (!res.ok) throw new Error("No se pudo acceder a la URL");
+        
+        const text = await res.text();
+        
+        // Procesamiento de filas detectando separador (coma o punto y coma)
+        const rows = text.trim().split('\n').map(row => {
+            const separator = row.includes(';') ? ';' : ',';
+            // Regex para ignorar comas dentro de comillas
+            const regex = new RegExp(`${separator}(?=(?:(?:[^"]*"){2})*[^"]*$)`);
+            return row.split(regex).map(cell => cell.replace(/"/g, '').trim());
+        });
+
+        if (rows.length < 2) throw new Error("La hoja de cálculo parece estar vacía");
+
+        DATA = rows.slice(1).filter(r => r.length >= 7).map(r => ({
+            e: r[0],
+            f: r[1],
+            a: r[2],
+            b: r[3],
+            fa: parseFloat(r[4].replace('.', '').replace(',', '.')) || 0,
+            n: parseFloat(r[5].replace('.', '').replace(',', '.')) || 0,
+            c: parseFloat(r[6].replace('.', '').replace(',', '.')) || 0,
+            s: r[7] ? r[7].toUpperCase() : 'SIN RESPUESTA'
+        }));
+
+        initDashboard();
+    } catch (e) {
+        console.error(e);
+        document.getElementById('statusMessage').textContent = "⚠️ Error: " + e.message + ". Intenta usar un servidor local o subir el archivo a la web.";
+        document.getElementById('statusMessage').style.color = "#f87171";
+    }
+}
+
+const fmtEur = (n) => n.toLocaleString('es-ES', {minimumFractionDigits:2}) + ' €';
+const ESTADO_COLORS = {'PAGADO':'#22c55e','COBRADO':'#14b8a6','MONITORIO':'#f59e0b','SIN RESPUESTA':'#ef4444','PTE PAGO':'#a855f7'};
+
+function initDashboard() {
+    const getSet = (p) => [...new Set(DATA.map(d => d[p]))].sort();
+    const fill = (id, set) => {
+        const el = document.getElementById(id);
+        set.forEach(v => { if(v) el.add(new Option(v, v)); });
+    };
+    fill('filterAseg', getSet('a'));
+    fill('filterAbog', getSet('b'));
+    fill('filterEstado', getSet('s'));
+
+    setupCharts();
+    applyFilters();
+    document.getElementById('statusMessage').textContent = `Datos actualizados — ${DATA.length} expedientes`;
+}
+
+function applyFilters() {
+    const fA = document.getElementById('filterAseg').value;
+    const fB = document.getElementById('filterAbog').value;
+    const fE = document.getElementById('filterEstado').value;
+    const fD = document.getElementById('filterDesde').value;
+    const fH = document.getElementById('filterHasta').value;
+
+    filteredData = DATA.filter(d => {
+        if (fA && d.a !== fA) return false;
+        if (fB && d.b !== fB) return false;
+        if (fE && d.s !== fE) return false;
+        if (fD && d.f < fD) return false;
+        if (fH && d.f > fH) return false;
+        return true;
+    });
+
+    currentPage = 1;
+    updateUI();
+}
+
+function updateUI() {
+    const n = filteredData.length;
+    const tF = filteredData.reduce((s, d) => s + d.fa, 0);
+    const tN = filteredData.reduce((s, d) => s + d.n, 0);
+    const tC = filteredData.reduce((s, d) => s + d.c, 0);
+
+    document.getElementById('kpiExpedientes').textContent = n;
+    document.getElementById('kpiExpChange').textContent = ((n/DATA.length)*100).toFixed(1) + "% del total";
+    document.getElementById('kpiFacturado').innerHTML = fmtEur(tF);
+    document.getElementById('kpiNegociado').innerHTML = fmtEur(tN);
+    document.getElementById('kpiCobrado').innerHTML = fmtEur(tC);
+    document.getElementById('kpiTasa').textContent = (tF > 0 ? (tC/tF*100) : 0).toFixed(1) + '%';
+    document.getElementById('kpiPendiente').innerHTML = fmtEur(tF - tC);
+    document.getElementById('kpiMedia').innerHTML = fmtEur(n > 0 ? tF/n : 0);
+
+    updateCharts();
+    updateTable();
+}
+
+function setupCharts() {
+    const ctx = (id) => document.getElementById(id).getContext('2d');
+    const opt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#eaf0ff', font: { size: 10 } } } } };
+    
+    charts.estado = new Chart(ctx('chartEstado'), { type: 'doughnut', data: { labels: [], datasets: [{ data: [] }] }, options: opt });
+    charts.aseg = new Chart(ctx('chartAseg'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Facturado', data: [], backgroundColor: '#3b82f6' }] }, options: { ...opt, indexAxis: 'y' } });
+    charts.mensual = new Chart(ctx('chartMensual'), { type: 'line', data: { labels: [], datasets: [{ label: 'Facturado', data: [], borderColor: '#3b82f6', fill: true }] }, options: opt });
+    charts.anual = new Chart(ctx('chartAnual'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Facturado', data: [], backgroundColor: '#3b82f6' }, { label: 'Cobrado', data: [], backgroundColor: '#22c55e' }] }, options: opt });
+    charts.abog = new Chart(ctx('chartAbog'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Expedientes', data: [], backgroundColor: '#a855f7' }] }, options: opt });
+    charts.estFact = new Chart(ctx('chartEstadoFact'), { type: 'bar', data: { labels: [], datasets: [{ data: [], label: 'Facturado' }] }, options: opt });
+    charts.comp = new Chart(ctx('chartComparativo'), { type: 'line', data: { labels: [], datasets: [{ label: 'Facturado', borderColor: '#3b82f6' }, { label: 'Negociado', borderColor: '#f59e0b' }, { label: 'Cobrado', borderColor: '#22c55e' }] }, options: opt });
+}
+
+function updateCharts() {
+    const ests = filteredData.reduce((a, c) => (a[c.s] = (a[c.s] || 0) + 1, a), {});
+    charts.estado.data.labels = Object.keys(ests);
+    charts.estado.data.datasets[0].data = Object.values(ests);
+    charts.estado.data.datasets[0].backgroundColor = Object.keys(ests).map(k => ESTADO_COLORS[k] || '#6366f1');
+    charts.estado.update();
+
+    const as = filteredData.reduce((a, c) => (a[c.a] = (a[c.a] || 0) + c.fa, a), {});
+    const sortedAs = Object.entries(as).sort((a,b) => b[1]-a[1]).slice(0,10);
+    charts.aseg.data.labels = sortedAs.map(e => e[0]);
+    charts.aseg.data.datasets[0].data = sortedAs.map(e => e[1]);
+    charts.aseg.update();
+
+    const ms = filteredData.reduce((a, c) => { if(c.f){ const m = c.f.substring(0,7); a[m] = (a[m]||0) + c.fa; } return a; }, {});
+    const sortedMs = Object.keys(ms).sort();
+    charts.mensual.data.labels = sortedMs;
+    charts.mensual.data.datasets[0].data = sortedMs.map(m => ms[m]);
+    charts.mensual.update();
+    
+    const abs = filteredData.reduce((a, c) => (a[c.b] = (a[c.b] || 0) + 1, a), {});
+    charts.abog.data.labels = Object.keys(abs);
+    charts.abog.data.datasets[0].data = Object.values(abs);
+    charts.abog.update();
+
+    const efMap = filteredData.reduce((a, c) => (a[c.s] = (a[c.s] || 0) + c.fa, a), {});
+    charts.estFact.data.labels = Object.keys(efMap);
+    charts.estFact.data.datasets[0].data = Object.values(efMap);
+    charts.estFact.data.datasets[0].backgroundColor = Object.keys(efMap).map(k => ESTADO_COLORS[k] || '#6366f1');
+    charts.estFact.update();
+
+    const cF = {}, cN = {}, cC = {};
+    filteredData.forEach(d => { if(d.f){ const m = d.f.substring(0,7); cF[m]=(cF[m]||0)+d.fa; cN[m]=(cN[m]||0)+d.n; cC[m]=(cC[m]||0)+d.c; } });
+    charts.comp.data.labels = sortedMs;
+    charts.comp.data.datasets[0].data = sortedMs.map(m => cF[m] || 0);
+    charts.comp.data.datasets[1].data = sortedMs.map(m => cN[m] || 0);
+    charts.comp.data.datasets[2].data = sortedMs.map(m => cC[m] || 0);
+    charts.comp.update();
+}
+
+function updateTable() {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageData = filteredData.slice(start, start + PAGE_SIZE);
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = pageData.map(d => `
+        <tr>
+            <td>${d.e}</td><td>${d.f || '—'}</td><td>${d.a}</td><td>${d.b}</td>
+            <td class="text-right">${fmtEur(d.fa)}</td><td class="text-right">${fmtEur(d.n)}</td><td class="text-right">${fmtEur(d.c)}</td>
+            <td><span class="estado-badge ${'estado-'+d.s.toLowerCase().replace(/\s+/g, '-')}">${d.s}</span></td>
+        </tr>
+    `).join('');
+
+    const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+    document.getElementById('pageInfo').textContent = `Página ${currentPage} de ${totalPages || 1}`;
+    document.getElementById('btnPrev').disabled = currentPage <= 1;
+    document.getElementById('btnNext').disabled = currentPage >= totalPages;
+    document.getElementById('tableCount').textContent = `(${filteredData.length} registros)`;
+}
+
+function changePage(delta) { currentPage += delta; updateTable(); }
+function resetFilters() { document.querySelectorAll('select, input').forEach(i => i.value = ''); applyFilters(); }
+
+// Suscribirse a cambios en filtros
+document.querySelectorAll('select, input').forEach(el => el.addEventListener('change', applyFilters));
+
+// Iniciar carga
+loadData();
+</script>
+</body>
+</html>
